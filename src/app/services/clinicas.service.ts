@@ -21,8 +21,12 @@ export class ClinicasService {
     return requestOptions;
   }
 
-  public getClinicas(): Observable<any[]> {
-    return this.http.get<any[]>(this.clinicasUrl, this.getToken());
+  public getClinicasAtivos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.clinicasUrl}?situacao=ativo`, this.getToken());
+  }
+
+  public getClinicasInativos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.clinicasUrl}?situacao=inativo`, this.getToken());
   }
 
   public getClinica(id: any): Observable<any> {
@@ -39,5 +43,9 @@ export class ClinicasService {
 
   public addProcedimento(clinicaId: any, procedimento: any): Observable<any> {
     return this.http.post<any>(`${this.clinicasUrl}/${clinicaId}/procedimentos`, procedimento, this.getToken());
+  }
+
+  public deleteClinica(clinicaId: any): Observable<any> {
+    return this.http.delete<any>(`${this.clinicasUrl}/${clinicaId}`, this.getToken());
   }
 }

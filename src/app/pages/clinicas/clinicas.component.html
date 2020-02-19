@@ -1,11 +1,9 @@
 <swal
   #procedimentosSwal
   title="Cadastrar Procedimento"
-  [confirmButtonClass]="'btn btn-fill btn-success'"
   (confirm)="cadastrarProcedimento()"
-  [options]="{ showLoaderOnConfirm: true }"
 >
-  <form *swalPartial="swalTargets.content" [formGroup]="procedimentoGroup">
+  <form *swalPortal="swalTargets.content" [formGroup]="procedimentoGroup">
     <div class="row">
       <div class="col-md-12">
         <div class="form-group">
@@ -37,9 +35,19 @@
       </div>
     </div>
   </form>
-  <ng-container *swalPartial="swalTargets.confirmButton">
+  <ng-container *swalPortal="swalTargets.confirmButton">
     Cadastrar
   </ng-container>
+</swal>
+<swal
+#apagarSwal
+title="Apagar"
+text="Deseja mesmo apagar esta clinica?"
+[showCancelButton]="true"
+[swalOptions]= "{customClass: {confirmButton: 'btn btn-fill btn-danger'}, confirmButtonText: 'Sim', cancelButtonText: 'Não'}"
+(confirm)="apagarClinica()"
+>
+
 </swal>
 <div class="main-content">
   <div class="container-fluid">
@@ -48,12 +56,26 @@
         <div class="card">
           <div class="header">
             <h4 class="title pull-left">Clínicas</h4>
-            <a [routerLink]="'adicionar/'">
-              <button class="btn btn-success btn-fill pull-right">
-                <span><i class="pe-7s-add-user"></i></span>
-                <span>Cadastrar Clínica</span>
-              </button>
-            </a>
+            <div class="row ">
+              <a [routerLink]="'adicionar/'">
+                <button class="btn btn-success btn-fill btn-adicionar pull-right">
+                  <span><i class="pe-7s-add-user"></i></span>
+                  <span>Cadastrar Clínica</span>
+                </button>
+              </a>
+              <a [routerLink]="'inativos/'" *ngIf="!inativos">
+                <button class="btn btn-danger btn-fill btn-inativos pull-right">
+                  <span><i class="pe-7s-close-circle"></i></span>
+                  <span>Clinicas inativas</span>
+                </button>
+              </a>
+              <a [routerLink]="'/admin/clinicas/'" *ngIf="inativos">
+                <button class="btn btn-info btn-fill btn-inativos pull-right">
+                  <span><i class="pe-7s-users"></i></span>
+                  <span>Clinicas ativas</span>
+                </button>
+              </a>
+            </div>
           </div>
           <div class="content table-responsive ">
             <ngx-spinner
@@ -65,20 +87,6 @@
             <div class="row" *ngIf="loaded">
               <div class="col-md-12 filtros">
                 <form class="form-inline" [formGroup]="filtroGroup">
-                  <div class="form-group">
-                    <label for="situacao">Situação: </label>
-                    <select
-                      name="situacao"
-                      id="situacao"
-                      class="form-control"
-                      formControlName="situacao"
-                    >
-                      <option value="todos" [selected]="true">Todos</option>
-                      <option value="ativos">Ativos</option>
-                      <option value="inativos">Inativos</option>
-                    </select>
-                  </div>
-
                   <div class="form-group">
                     <label for="estado">Estado: </label>
                     <select
@@ -133,58 +141,69 @@
                   <th>Nome</th>
                   <th>Endereço</th>
                   <th>CNPJ</th>
+                  <th>Situação</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
-              <tbody>
-                <ng-container
-                  *ngFor="let clinica of filtros; let i = index"
-                  [attr.data.index]="i"
-                  data-toggle="collapse"
-                >
-                  <tr (click)="collapse(i)" class="accordion-toggle">
-                    <td>{{ clinica.name }}</td>
-                    <td>{{ clinica.endereco }}</td>
-                    <td>{{ clinica.cnpj }}</td>
-                    <td>
-                      <a [routerLink]="['editar/', clinica.id]">
+              <tbody><ng-container
+                *ngFor="let clinica of filtros; let i = index"
+                data-toggle="collapse"
+              >
+                <tr (click)="collapse(i)" class="accordion-toggle">
+                  <td>{{ clinica.name }}</td>
+                  <td>{{ clinica.endereco }}</td>
+                  <td>{{ clinica.cnpj }}</td>
+                  <td>{{ clinica.isActive ? 'Ativa' : 'Inativa' }}</td>
+                  <td>
+                    <a [routerLink]="['/admin/clinicas/editar/', clinica.id]">
+                      <button
+                        class="btn btn-primary btn-fill"
+                        name="editar"
+                        aria-label="editar"
+                      >
+                        <i class="pe-7s-pen"></i>
+                      </button>
+                    </a>
+                    <button
+                    type="button"
+                    class="btn btn-danger btn-fill btn-apagar"
+                    aria-label="apagar"
+                    (click)="abrirModalApagar(clinica, $event)"
+                    >
+                    <i class="pe-7s-trash"></i>
+                  
+                  </button>
+                  </td>
+                </tr>
+                <tr *ngIf="clinica.collapsed">
+                  <td colspan="4">
+                    <div class="row">
+                      <div class="col-md-4 pull-right">
                         <button
-                          class="btn btn-primary btn-fill"
-                          name="editar"
-                          aria-label="editar"
+                          class="btn btn-success btn-fill"
+                          (click)="abrirModalProcedimento(clinica)"
                         >
-                          <i class="pe-7s-pen"></i>
+                          <i class="pe-7s-note2"></i>Cadastrar Procedimento
                         </button>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr *ngIf="clinica.collapsed">
-                    <td colspan="4">
-                      <div class="row">
-                        <div class="col-md-4 pull-right">
-                          <button
-                            class="btn btn-success btn-fill"
-                            (click)="abrirModal(clinica)"
-                          >
-                            <i class="pe-7s-note2"></i>Cadastrar Procedimento
-                          </button>
-                        </div>
-                        <div
-                          class="align-self-center collapse in"
-                          *ngIf="clinica.procedimentos.length == 0"
-                        >
-                          Não há procedimentos cadastrados
-                        </div>
                       </div>
                       <div
-                        class="collapse in"
-                        *ngFor="let procedimento of clinica.procedimentos"
-                        style="padding-left: 2%"
+                        class="align-self-center collapse in"
+                        *ngIf="clinica.procedimentos.length == 0"
                       >
-                        - {{ procedimento.nome }} - R$ {{ procedimento.valor }}
+                        Não há procedimentos cadastrados
                       </div>
-                    </td>
-                  </tr>
-                </ng-container>
+                    </div>
+                    <div
+                      class="collapse in"
+                      *ngFor="let procedimento of clinica.procedimentos"
+                      style="padding-left: 2%"
+                    >
+                      - {{ procedimento.nome }} - R$ {{ procedimento.valor }}
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+                
               </tbody>
             </table>
           </div>

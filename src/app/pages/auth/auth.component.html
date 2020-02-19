@@ -18,8 +18,10 @@
                     <div class="col-md-12">
                       <div class="form-group">
                         <label for="cpf">CPF/CNPJ</label>
-                        <input type="text" id="cpf" required name="cpf" placeholder="CPF/CNPJ"
+                        <input type="text" [mask]="mask" id="cpf" required name="cpf" placeholder="CPF/CNPJ"
                          class="form-control" formControlName="username"
+                          [showMaskedTyped]="true"
+                          [dropSpecialCharacters]='false'
                          >
                          <p class="erro" *ngIf="authValidation.username">CPF/CNPJ incorreto</p>
                          <p class="erro" *ngIf="authExists.username">Preencha este campo!</p>

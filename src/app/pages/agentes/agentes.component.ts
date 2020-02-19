@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { ActivatedRoute } from '@angular/router'
 import { AgenteService } from '../../services/agente.service';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { LocalService } from '../../services/local.service';
@@ -6,6 +7,8 @@ import { Estado } from '../../models/estado';
 import { Cidade } from '../../models/cidade';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FiltroService } from '../../services/filtro.service';
+import { SwalComponent, SwalPortalTargets } from '@sweetalert2/ngx-sweetalert2';
+import { from } from 'rxjs';
 
 @Component({
   selector: 'app-agentes',
@@ -14,6 +17,7 @@ import { FiltroService } from '../../services/filtro.service';
 })
 export class AgentesComponent implements OnInit {
   @ViewChild('cidadeSelect') cidadeSelect: ElementRef;
+  @ViewChild('apagarSwal') apagarModal: SwalComponent;
   filtroGroup: FormGroup = new FormGroup({
     estado: new FormControl('selecione'),
     cidade: new FormControl('selecione'),
@@ -25,6 +29,8 @@ export class AgentesComponent implements OnInit {
   filtrosEstadoCidade: any[] = [];
   filtroPesquisa: string;
   loaded = false;
+  inativos = false;
+  agenteId: string;
 
   estados: Array<Estado> = [];
   cidades: Array<Cidade> = [];
@@ -32,22 +38,34 @@ export class AgentesComponent implements OnInit {
   constructor(private agenteService: AgenteService,
     private spinner: NgxSpinnerService,
     private localService: LocalService,
-    private filtroService: FiltroService) { }
+    private filtroService: FiltroService,
+    private route: ActivatedRoute,
+    private portalTargets: SwalPortalTargets) { }
 
   ngOnInit() {
     this.spinner.show();
     this.configureForm();
-    this.getAgentes();
+    this.route.data.subscribe((data) => {
+      if (data.hasOwnProperty('inativos') && data.inativos) {
+        this.inativos = true;
+      }
+      this.getAgentes();
+    });
+    
   }
 
-  getAgentes(): void {
-    const agentesSubscription = this.agenteService.getAgentes().subscribe((retorno) => {
-      this.agentes = [...retorno];
-      this.filtros = [...this.agentes];
-      this.loaded = true;
-      this.spinner.hide();
-      agentesSubscription.unsubscribe();
-    });
+  async getAgentes() {
+    let retorno;
+    if (this.inativos) {
+      retorno = await this.agenteService.getAgentesInativos().toPromise();
+    } else {
+      retorno = await this.agenteService.getAgentesAtivos().toPromise();
+    }
+    this.agentes = [...retorno];
+    console.log(this.agentes);
+    this.filtros = [...this.agentes];
+    this.loaded = true;
+    this.spinner.hide();
   }
 
   getEstados() {
@@ -74,6 +92,24 @@ export class AgentesComponent implements OnInit {
       cidadesSubscription.unsubscribe();
     }
     );
+  }
+
+  public showModal(agenteId) {
+    this.agenteId = agenteId;
+    this.apagarModal.fire();
+  }
+
+  public async apagarAgente() {
+   try {
+    const retorno = await this.agenteService.deleteAgente(this.agenteId).toPromise(); 
+    console.log(retorno);
+    this.agenteId = null;
+    this.loaded = false;
+    this.spinner.show();
+    this.getAgentes();
+   } catch (error) {
+     console.error(error);
+   }
   }
 
   configureForm(): void {

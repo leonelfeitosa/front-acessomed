@@ -32,18 +32,14 @@ export class AuthComponent implements OnInit {
     password: false
   };
   submitting = false;
+  mask = '000.000.000-009';
   constructor(private authService: AuthService,
               private fireAuth: AngularFireAuth,
               private router: Router,
               private spinner: NgxSpinnerService) { }
 
   ngOnInit() {
-    this.authGroup.get('username').valueChanges.subscribe(() => {
-      this.authValidation.username = false;
-      this.authValidation.password = false;
-      this.authExists.username = false;
-      this.authExists.password = false;
-    })
+    this.configureForm();
   }
 
 
@@ -90,6 +86,23 @@ export class AuthComponent implements OnInit {
             }
           )
         }
+  }
+
+  public configureForm():void {
+    this.authGroup.get('username').valueChanges.subscribe((value) => {
+      this.authValidation.username = false;
+      this.authValidation.password = false;
+      this.authExists.username = false;
+      this.authExists.password = false;
+      
+      if (value.length > 14) {
+        this.mask = '00.000.000/0000-00'
+      }
+      if (value.length < 15) {
+        this.mask = '000.000.000-009'
+      }
+    });
+    
   }
 
 }

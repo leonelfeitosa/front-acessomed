@@ -22,7 +22,19 @@ export class ClientesService {
     return requestOptions;
   }
 
-  public getClientes(): Observable<Cliente[]> {
-    return this.http.get<Cliente[]>(this.clientesUrl, this.getToken());
+  public getClientesAtivos(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(`${this.clientesUrl}/?situacao=ativo`, this.getToken());
+  }
+
+  public getClientesInativos(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(`${this.clientesUrl}/?situacao=inativo`, this.getToken());
+  }
+
+  public deleteCliente(clienteId): Observable<any> {
+    return this.http.delete<any>(`${this.clientesUrl}/${clienteId}`, this.getToken());
+  }
+
+  public updateCliente(clienteId, update): Observable<any> {
+    return this.http.put<any>(`${this.clientesUrl}/${clienteId}`, update, this.getToken());
   }
 }

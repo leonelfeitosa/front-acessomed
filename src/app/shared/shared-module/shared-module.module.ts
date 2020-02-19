@@ -1,13 +1,15 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgxSpinnerModule } from 'ngx-spinner';
+import { NgxMaskModule } from 'ngx-mask';
 
 @NgModule({
   imports: [
     CommonModule,
-    NgxSpinnerModule
+    NgxSpinnerModule,
+    NgxMaskModule.forRoot()
   ],
   declarations: [],
-  exports: [NgxSpinnerModule]
+  exports: [NgxSpinnerModule, NgxMaskModule]
 })
 export class SharedModuleModule { }

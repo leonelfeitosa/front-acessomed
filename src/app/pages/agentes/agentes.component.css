@@ -48,3 +48,16 @@ ul {
 .filtros {
 	margin: 2% auto;
 }
+
+.btn-adicionar {
+	margin-left: 1%;
+	margin-right: 2%;
+}
+
+.btn-inativos {
+	margin-right: 1%;
+}
+
+.btn-apagar {
+	margin-left: 1%;
+}

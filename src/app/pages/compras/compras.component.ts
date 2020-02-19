@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ComprasService } from '../../services/compras.service';
-import { SwalComponent, SwalPartialTargets } from '@sweetalert2/ngx-sweetalert2';
+import { SwalComponent, SwalPortalTargets } from '@sweetalert2/ngx-sweetalert2';
 
 @Component({
   selector: 'app-compras',
@@ -13,7 +13,7 @@ export class ComprasComponent implements OnInit {
   @ViewChild('detalhesSwal') private detalhesModal: SwalComponent;
 
   constructor(private comprasService: ComprasService,
-    public readonly swalTargets: SwalPartialTargets) { }
+    public readonly swalTargets: SwalPortalTargets) { }
 
   ngOnInit() {
     this.getCompras();
@@ -28,7 +28,7 @@ export class ComprasComponent implements OnInit {
 
   abrirModal(compra) {
     this.compraSelecionada = compra;
-    this.detalhesModal.show();
+    this.detalhesModal.fire();
   }
 
   isUndefined(obj) {

@@ -141,39 +141,69 @@ export class CadastrarAgenteComponent implements OnInit {
             if (!this.editedFoto) {
             newAgente.foto_perfil = this.currentAgente.foto_perfil;
             }
-            this.agenteService.updateAgente(this.agenteID, newAgente).subscribe(() => {
+            try {
+              await this.agenteService.updateAgente(this.agenteID, newAgente).toPromise();
+            $.notify({
+              icon: '',
+              message: 'Agente alterado'
+            }, {
+              type: 'info',
+              timer: '1000',
+              placement: {
+                from: 'top',
+                align: 'center'
+              }
+            });
+            if (this.agenteActive) {
+              this.router.navigateByUrl('/admin/agentes');
+            } else {
+              this.router.navigateByUrl('/admin/agentes/inativos');
+            }
+            } catch (err) {
+              this.spinner.hide();
               $.notify({
                 icon: '',
-                message: 'Agente alterado'
+                message: 'Ocorreu um erro'
               }, {
-                type: 'info',
+                type: 'danger',
                 timer: '1000',
                 placement: {
                   from: 'top',
                   align: 'center'
                 }
               });
-            }, () => {
-              this.spinner.hide();
-            });
-            this.router.navigateByUrl('/admin/agentes');
+            }
           } else {
-            this.agenteService.addAgente(newAgente).subscribe(() => {
+            try {
+              await this.agenteService.addAgente(newAgente).toPromise();
               $.notify({
                 icon: '',
                 message: 'Agente criado'
               }, {
                 type: 'info',
                 timer: '1000',
+                placement: { 
+                  from: 'top',
+                  align: 'center'
+                }
+              });
+              this.router.navigateByUrl('/admin/agentes');
+            } catch(err) {
+              console.log(err);
+              this.spinner.hide();
+              $.notify({
+                icon: '',
+                message: 'Este CPF já está cadastrado!'
+              }, {
+                type: 'danger',
+                timer: '1000',
                 placement: {
                   from: 'top',
                   align: 'center'
                 }
               });
-            }, () => {
-              this.spinner.hide();
-            });
-            this.router.navigateByUrl('/admin/agentes');
+            }
+            
           }
         }
         }

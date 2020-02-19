@@ -22,9 +22,14 @@ export class AgenteService {
       return requestOptions;
     }
 
-  public getAgentes(): Observable<any> {
+  public getAgentesAtivos(): Observable<any> {
 
-    return this.http.get<any>(this.agentesUrl, this.getToken());
+    return this.http.get<any>(`${this.agentesUrl}?situacao=ativo`, this.getToken());
+  }
+
+  public getAgentesInativos(): Observable<any> {
+    const requestUrl = `${this.agentesUrl}?situacao=inativo`;
+    return this.http.get<any>(requestUrl, this.getToken());
   }
 
   public getAgente(agenteId: any): Observable<any> {
@@ -37,5 +42,9 @@ export class AgenteService {
   }
   public updateAgente(agenteID: any, agente: any): Observable<any> {
     return this.http.put<any>(`${this.agentesUrl}/${agenteID}`, agente, this.getToken());
+  }
+
+  public deleteAgente(agenteId): Observable<any> {
+    return this.http.delete<any>(`${this.agentesUrl}/${agenteId}`, this.getToken());
   }
 }

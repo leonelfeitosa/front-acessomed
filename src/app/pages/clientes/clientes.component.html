@@ -1,11 +1,13 @@
 <swal
-  #historicoSwal
+  #historicoSwalAtivo
   title="Historico de Compras"
   [showCancelButton]="false"
-  [showConfirmButton]="false"
+  [showConfirmButton]="true"
   [showCloseButton]="true"
+  [swalOptions]="{customClass:{confirmButton: 'btn btn-fill btn-danger'}, confirmButtonText: 'Desativar cliente', buttonsStyling: false}"
+  (confirm)="desativarCliente()"
 >
-  <table *swalPartial="swalTargets.content" class="table table-stripped">
+  <table *swalPortal="swalTargets.content" class="table table-stripped">
     <thead>
       <tr>
         <th>Procedimento</th>
@@ -22,7 +24,42 @@
     </tbody>
   </table>
 </swal>
+<swal
+  #historicoSwalInativo
+  title="Historico de Compras"
+  [showCancelButton]="false"
+  [showConfirmButton]="true"
+  [showCloseButton]="true"
+  [swalOptions]="{customClass:{confirmButton: 'btn btn-fill btn-info'}, confirmButtonText: 'Ativar cliente', buttonsStyling: false}"
+  (confirm)="ativarCliente()"
+>
+  <table *swalPortal="swalTargets.content" class="table table-stripped">
+    <thead>
+      <tr>
+        <th>Procedimento</th>
+        <th>Valor</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let compra of comprasCliente">
+        <td>{{compra.procedimento.nome}}</td>
+        <td>R$ {{compra.procedimento.valor}}</td>
+        <td>{{compra.dataCompra}}</td>
+      </tr>
+    </tbody>
+  </table>
+</swal>
+<swal
+#apagarSwal
+title="Apagar"
+text="Deseja mesmo apagar este cliente"
+[showCancelButton]="true"
+[swalOptions]= "{customClass: {confirmButton: 'btn btn-fill btn-danger'}, confirmButtonText: 'Sim', cancelButtonText: 'Não'}"
+(confirm)="apagarCliente()"
+>
 
+</swal>
 <div class="main-content">
   <div class="container-fluid">
     <div class="row">
@@ -30,6 +67,18 @@
         <div class="card">
           <div class="header">
             <h4 class="title pull-left">Clientes</h4>
+            <a [routerLink]="'inativos/'" *ngIf="!inativos">
+              <button class="btn btn-danger btn-fill btn-inativos pull-right">
+                <span><i class="pe-7s-close-circle"></i></span>
+                <span>Cliente inativos</span>
+              </button>
+            </a>
+            <a [routerLink]="'/admin/clientes/'" *ngIf="inativos">
+              <button class="btn btn-info btn-fill btn-inativos pull-right">
+                <span><i class="pe-7s-users"></i></span>
+                <span>Clientes ativos</span>
+              </button>
+            </a>
           </div>
           <div class="content table-responsive">
             <div>
@@ -99,6 +148,8 @@
                           <th>Estado</th>
                           <th>Cidade</th>
                           <th>Data de Nascimento</th>
+                          <th>Situação</th>
+                          <th>Ações</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -107,6 +158,16 @@
                           <td>{{cliente.estado}}</td>
                           <td>{{cliente.cidade}}</td>
                           <td>{{cliente.data_nascimento}}</td>
+                          <td>{{cliente.isActive ? 'Ativo' : 'Inativo'}}</td>
+                          <td>
+                            <button
+                            type="button"
+                            class="btn btn-fill btn-danger"
+                            (click)="abrirModalApagar(cliente.id, $event)"
+                            >
+                            <i class="pe-7s-trash"></i>
+                          </button>
+                          </td>
                         </tr>
                       </tbody>
                     </table>

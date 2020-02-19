@@ -1,3 +1,13 @@
+<swal
+#apagarSwal
+title="Apagar"
+text="Deseja mesmo apagar este agente?"
+[showCancelButton]="true"
+[swalOptions]= "{customClass: {confirmButton: 'btn btn-fill btn-danger'}, confirmButtonText: 'Sim', cancelButtonText: 'Não'}"
+(confirm)="apagarAgente()"
+>
+
+</swal>
 <div class="main-content">
   <div class="container-fluid">
     <div class="row">
@@ -5,12 +15,26 @@
         <div class="card">
           <div class="header">
             <h4 class="title pull-left">Agentes</h4>
-            <a [routerLink]="'adicionar/'">
-              <button class="btn btn-success btn-fill pull-right">
-                <span><i class="pe-7s-add-user"></i></span>
-                <span>Cadastrar Agente</span>
-              </button>
-            </a>
+            <div class="row ">
+              <a [routerLink]="'adicionar/'">
+                <button class="btn btn-success btn-fill btn-adicionar pull-right">
+                  <span><i class="pe-7s-add-user"></i></span>
+                  <span>Cadastrar Agente</span>
+                </button>
+              </a>
+              <a [routerLink]="'inativos/'" *ngIf="!inativos">
+                <button class="btn btn-danger btn-fill btn-inativos pull-right">
+                  <span><i class="pe-7s-close-circle"></i></span>
+                  <span>Agentes inativos</span>
+                </button>
+              </a>
+              <a [routerLink]="'/admin/agentes/'" *ngIf="inativos">
+                <button class="btn btn-info btn-fill btn-inativos pull-right">
+                  <span><i class="pe-7s-users"></i></span>
+                  <span>Agentes ativos</span>
+                </button>
+              </a>
+            </div>
           </div>
           <div class="content table-responsive ">
             <ngx-spinner
@@ -24,18 +48,7 @@
               <div class="col-md-12 filtros">
                 <div>
                   <form class="form-inline" [formGroup]="filtroGroup">
-                    <div class="form-group">
-                      <label for="situacao">Situação: </label>
-                      <select
-                        id="situacao"
-                        class="form-control"
-                        formControlName="situacao"
-                      >
-                        <option value="todos" selected="true">Todos</option>
-                        <option value="ativos">Ativos</option>
-                        <option value="inativos">Inativos</option>
-                      </select>
-                    </div>
+                  
                     <div class="form-group">
                       <label for="estado">Estado: </label>
                       <select
@@ -97,6 +110,7 @@
                   <th>Nome</th>
                   <th>CPF</th>
                   <th>Telefone</th>
+                  <th>Situação</th>
                   <th>Ações</th>
                 </tr>
               </thead>
@@ -105,8 +119,9 @@
                   <td>{{ agente.name }}</td>
                   <td>{{ agente.cpf }}</td>
                   <td>{{ agente.telefone }}</td>
+                  <td>{{ agente.isActive ? 'Ativo': 'Inativo' }}</td>
                   <td>
-                    <a [routerLink]="['editar/', agente.id]" name="editar">
+                    <a [routerLink]="['/admin/agentes/editar/', agente.id]" name="editar">
                       <button
                         class="btn btn-primary btn-fill"
                         name="editar"
@@ -114,6 +129,14 @@
                       >
                         <i class="pe-7s-pen"></i></button
                     ></a>
+                    <button
+                    class="btn btn-danger btn-fill btn-apagar"
+                    aria-label="apagar"
+                    type="button"
+                    (click)="showModal(agente.id)"
+                    >
+                    <i class="pe-7s-trash"></i>
+                  </button>
                   </td>
                 </tr>
               </tbody>

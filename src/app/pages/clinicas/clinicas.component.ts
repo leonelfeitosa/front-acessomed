@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ClinicasService } from '../../services/clinicas.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { SwalComponent, SwalPartialTargets } from '@sweetalert2/ngx-sweetalert2';
+import { SwalComponent, SwalPortalTargets } from '@sweetalert2/ngx-sweetalert2';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { LocalService } from '../../services/local.service';
 import { Estado } from '../../models/estado';
@@ -17,7 +18,6 @@ declare var $: any;
   styleUrls: ['./clinicas.component.scss']
 })
 export class ClinicasComponent implements OnInit {
-
   clinicas: any = [];
   filtros: any[] = [];
   filtrosEstadoCidade: any[] = [];
@@ -26,6 +26,7 @@ export class ClinicasComponent implements OnInit {
   estados: Array<Estado> = [];
   cidades: Array<Cidade> = [];
   cidadeOpcao = 'Selecione um estado'
+  inativos = false;
 
   procedimentoGroup = new FormGroup({
     nome: new FormControl('', Validators.required),
@@ -40,17 +41,24 @@ export class ClinicasComponent implements OnInit {
   })
 
   @ViewChild('procedimentosSwal') private procedimentoModal: SwalComponent;
+  @ViewChild('apagarSwal') apagarModal: SwalComponent;
 
   constructor(private clinicasService: ClinicasService,
-    public readonly swalTargets: SwalPartialTargets,
+    public readonly swalTargets: SwalPortalTargets,
     private spinner: NgxSpinnerService,
     private localService: LocalService,
-    private filtroService: FiltroService) { }
+    private filtroService: FiltroService,
+    private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.spinner.show();
     this.configureForm();
-    this.getClinicas();
+    this.route.data.subscribe((data) => {
+      if (data.hasOwnProperty('inativos') && data.inativos) {
+        this.inativos = true;
+      }
+      this.getClinicas();
+    })
   }
 
   getEstados(): void {
@@ -97,17 +105,20 @@ export class ClinicasComponent implements OnInit {
     this.filtros = this.filtroService.filtroCidade(this.filtrosEstadoCidade, cidade);
   }
 
-  getClinicas(): void {
-    const clinicaSubscription = this.clinicasService.getClinicas().subscribe((clinicas) => {
-      this.clinicas = [...clinicas];
-      for (let i = 0; i < this.clinicas.length; i++) {
-        this.clinicas[i].collapsed = false;
-      }
-      this.filtros = clinicas;
+  async getClinicas() {
+    if (this.inativos) {
+      const retorno = await this.clinicasService.getClinicasInativos().toPromise();
+      this.clinicas = [...retorno];
+      this.filtros = [...this.clinicas];
       this.loaded = true;
       this.spinner.hide();
-      clinicaSubscription.unsubscribe();
-    });
+    } else {
+      const retorno = await this.clinicasService.getClinicasAtivos().toPromise();
+      this.clinicas = [...retorno];
+      this.filtros = [...this.clinicas];
+      this.loaded = true;
+      this.spinner.hide();
+    }
   }
 
   async filtro(filtro: string) {
@@ -148,9 +159,23 @@ export class ClinicasComponent implements OnInit {
     }
   }
 
-  abrirModal(clinica: any): void {
+  abrirModalProcedimento(clinica: any): void {
     this.clinicaAtual = clinica;
-    this.procedimentoModal.show();
+    this.procedimentoModal.fire();
+  }
+
+  abrirModalApagar(clinica: any, event): void {
+    event.stopPropagation();
+    this.clinicaAtual = clinica;
+    this.apagarModal.fire();
+  }
+
+  async apagarClinica() {
+    await this.clinicasService.deleteClinica(this.clinicaAtual.id).toPromise();
+    this.spinner.show();
+    this.loaded = false;
+    this.clinicaAtual = null;
+    this.getClinicas();
   }
 
   configureForm(): void {
@@ -181,13 +206,13 @@ export class ClinicasComponent implements OnInit {
         icon: '',
         message: 'Procedimento adicionado'
       }, {
-          type: 'info',
-          timer: '1000',
-          placement: {
-            from: 'top',
-            align: 'center'
-          }
-        });
+        type: 'info',
+        timer: '1000',
+        placement: {
+          from: 'top',
+          align: 'center'
+        }
+      });
     })
   }
 

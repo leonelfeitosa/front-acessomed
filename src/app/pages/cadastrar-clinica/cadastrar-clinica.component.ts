@@ -29,7 +29,7 @@ export class CadastrarClinicaComponent implements OnInit {
     estado: new FormControl(''),
     cidade: new FormControl(''),
     especialidades: new FormControl()
-  }, {validators: confirmarSenha});
+  }, { validators: confirmarSenha });
 
   edit = false;
   clinicaId: string;
@@ -42,16 +42,16 @@ export class CadastrarClinicaComponent implements OnInit {
   cidadeOpcao = 'Selecione um estado';
 
   constructor(private clinicasService: ClinicasService,
-              private router: Router,
-              private route: ActivatedRoute,
-              private localService: LocalService,
-              private spinner: NgxSpinnerService) { }
+    private router: Router,
+    private route: ActivatedRoute,
+    private localService: LocalService,
+    private spinner: NgxSpinnerService) { }
 
   ngOnInit() {
     this.configureForm();
     this.estados = this.route.snapshot.data.pageData.estados;
-    this.clinicaGroup.get('estado').setValue('selecione', {emitEvent: false});
-    this.clinicaGroup.get('cidade').setValue('selecione', {emitEvent: false})
+    this.clinicaGroup.get('estado').setValue('selecione', { emitEvent: false });
+    this.clinicaGroup.get('cidade').setValue('selecione', { emitEvent: false })
     this.route.data.subscribe((dataSnapshot) => {
       if (dataSnapshot.hasOwnProperty('edit') && dataSnapshot.edit) {
         this.spinner.show();
@@ -61,28 +61,34 @@ export class CadastrarClinicaComponent implements OnInit {
   }
 
   public getClinica() {
-    this.route.params.subscribe((paramsSnapshot) => {
+    this.route.params.subscribe(async (paramsSnapshot) => {
       this.clinicaId = paramsSnapshot['id'];
       this.edit = true;
-      this.clinicasService.getClinica(this.clinicaId).subscribe(async (clinica) => {
-        this.clinicaGroup.get('name').setValue(clinica.name);
-        this.clinicaGroup.get('cnpj').setValue(clinica.cnpj);
-        this.clinicaGroup.get('endereco').setValue(clinica.endereco);
-        this.clinicaActive = clinica.isActive;
-        this.currentClinica = clinica;
-        const estado = this.findEstado(clinica.estado);
-        this.clinicaGroup.get('estado').setValue(estado, {emitEvent: false});
-        await this.estadoSelecionado(estado);
-        const cidade = this.findCidade(clinica.cidade);
-        this.clinicaGroup.get('cidade').setValue(cidade, {emitEvent: false});
-        this.spinner.hide();
+      const clinica = await this.clinicasService.getClinica(this.clinicaId).toPromise();
+      this.clinicaGroup.get('name').setValue(clinica.name);
+      this.clinicaGroup.get('cnpj').setValue(clinica.cnpj);
+      this.clinicaGroup.get('endereco').setValue(clinica.endereco);
+      this.clinicaActive = clinica.isActive;
+      this.currentClinica = clinica;
+      const estado = this.findEstado(clinica.estado);
+      this.clinicaGroup.get('estado').setValue(estado, { emitEvent: false });
+      await this.estadoSelecionado(estado);
+      const cidade = this.findCidade(clinica.cidade);
+      this.clinicaGroup.get('cidade').setValue(cidade, { emitEvent: false });
+      const especialidades = clinica.especialidades.map((especialidade, index) => {
+        return {
+          value: especialidade,
+          display: especialidade
+        }
       });
+      this.clinicaGroup.get('especialidades').setValue(especialidades, { emitEvent: false });
+      this.spinner.hide();
     });
   }
 
   public async getEstados() {
     this.clearArray(this.estados);
-     this.localService.getEstados().subscribe((estados) => {
+    this.localService.getEstados().subscribe((estados) => {
       this.estados = estados.map((estado) => {
         const newEstado = new Estado();
         newEstado.id = estado.id;
@@ -90,7 +96,7 @@ export class CadastrarClinicaComponent implements OnInit {
         newEstado.sigla = estado.sigla;
         return newEstado;
       });
-     });
+    });
   }
 
   public async estadoSelecionado(estado: Estado) {
@@ -101,7 +107,7 @@ export class CadastrarClinicaComponent implements OnInit {
       newCidade.nome = cidade.nome;
       return newCidade;
     }));
-    this.clinicaGroup.get('cidade').setValue('selecione', {emitValue: false});
+    this.clinicaGroup.get('cidade').setValue('selecione', { emitValue: false });
     this.cidadeOpcao = 'Selecione uma cidade';
   }
 
@@ -130,7 +136,7 @@ export class CadastrarClinicaComponent implements OnInit {
     });
   }
 
-  public addClinica() {
+  public async addClinica() {
     if (this.clinicaGroup.valid) {
       this.spinner.show();
       const especialidades = this.clinicaGroup.value.especialidades.map((especialidade) => {
@@ -146,7 +152,8 @@ export class CadastrarClinicaComponent implements OnInit {
         especialidades: especialidades
       };
       if (this.edit) {
-        this.clinicasService.updateClinica(this.clinicaId, newClinica).subscribe((clinica) => {
+        try {
+          await this.clinicasService.updateClinica(this.clinicaId, newClinica).toPromise();
           $.notify({
             icon: '',
             message: 'Editado com sucesso'
@@ -158,28 +165,60 @@ export class CadastrarClinicaComponent implements OnInit {
               align: 'center'
             }
           });
-          this.router.navigateByUrl('/admin/clinicas');
-        }, () => {
-          this.spinner.hide();
-        })
-      } else {
-      this.clinicasService.addClinica(newClinica).subscribe((result) => {
-        $.notify({
-          icon: '',
-          message: 'Cadastrado com sucesso'
-        }, {
-          type: 'success',
-          timer: '1000',
-          placement: {
-            from: 'top',
-            align: 'center'
+          if (this.clinicaActive) {
+            this.router.navigateByUrl('/admin/clinicas');  
+          } else {
+            this.router.navigateByUrl('/admin/clinicas/inativos')
           }
-        });
-        this.router.navigateByUrl('/admin/clinicas');
-      }, () => {
-        this.spinner.hide();
-      })
-    }
+          
+        } catch (err) {
+          console.log(err);
+          $.notify({
+            icon: '',
+            message: 'Ocorreu um erro'
+          }, {
+            type: 'danger',
+            timer: '1000',
+            placement: {
+              from: 'top',
+              align: 'center'
+            }
+          });
+          this.spinner.hide();
+        }
+
+      } else {
+        try {
+          await this.clinicasService.addClinica(newClinica).toPromise();
+          $.notify({
+            icon: '',
+            message: 'Cadastrado com sucesso'
+          }, {
+            type: 'success',
+            timer: '1000',
+            placement: {
+              from: 'top',
+              align: 'center'
+            }
+          });
+          this.router.navigateByUrl('/admin/clinicas');
+        } catch (err) {
+          console.log(err);
+          $.notify({
+            icon: '',
+            message: 'Este CNPJ já está cadastrado'
+          }, {
+            type: 'danger',
+            timer: '1000',
+            placement: {
+              from: 'top',
+              align: 'center'
+            }
+          });
+        }
+
+
+      }
     }
   }
 
